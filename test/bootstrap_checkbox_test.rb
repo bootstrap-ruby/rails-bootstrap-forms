@@ -88,4 +88,5 @@ class BootstrapCheckboxTest < ActionView::TestCase
     assert_equal expected, @builder.collection_check_boxes(:misc, collection, :id, :street, checked: [1, 2])
     assert_equal expected, @builder.collection_check_boxes(:misc, collection, :id, :street, checked: collection)
   end
+
 end
