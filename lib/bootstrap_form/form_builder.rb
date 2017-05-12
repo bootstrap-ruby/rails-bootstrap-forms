@@ -23,9 +23,9 @@ module BootstrapForm
       @control_col = options[:control_col] || default_control_col
       @label_errors = options[:label_errors] || false
       @inline_errors = if options[:inline_errors].nil?
-        @label_errors != true
+        !@label_errors
       else
-        options[:inline_errors] != false
+        options[:inline_errors]
       end
       @acts_like_form_tag = options[:acts_like_form_tag]
 
@@ -379,7 +379,7 @@ module BootstrapForm
       options[:class] = classes.compact.join(" ")
 
       if label_errors && has_error?(name)
-        error_messages = get_error_messages(name)
+        error_messages = get_error_messages(name, label_errors.is_a?(Hash) ? label_errors : {})
         label_text = (options[:text] || object.class.human_attribute_name(name)).to_s.concat(" #{error_messages}")
         label(name, label_text, options.except(:text))
       else
@@ -389,7 +389,7 @@ module BootstrapForm
     end
 
     def generate_help(name, help_text)
-      help_text = get_error_messages(name) if has_error?(name) && inline_errors
+      help_text = get_error_messages(name, inline_errors.is_a?(Hash) ? inline_errors : {}) if has_error?(name) && inline_errors
       return if help_text === false
 
       help_text ||= get_help_text_by_i18n_key(name)
@@ -400,9 +400,22 @@ module BootstrapForm
     def generate_icon(icon)
       content_tag(:span, "", class: "glyphicon glyphicon-#{icon} form-control-feedback")
     end
-
-    def get_error_messages(name)
-      object.errors[name].join(", ")
+    
+    def get_error_messages(name, error_options = {})
+      no_duplicates = error_options[:no_duplicates] || false
+      to_sentence = error_options[:to_sentence] || false
+      
+      error_messages = object.errors[name]
+      
+      error_messages = error_messages.uniq if no_duplicates
+      if to_sentence
+        error_messages = error_messages.to_sentence + '.'
+        error_messages[0] = error_messages.first.capitalize
+      else
+        error_messages = error_messages.join(", ")
+      end
+      
+      return error_messages
     end
 
     def inputs_collection(name, collection, value, text, options = {}, &block)
